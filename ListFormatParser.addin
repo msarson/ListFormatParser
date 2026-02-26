@@ -28,4 +28,17 @@
     </Condition>
   </Path>
 
+  <!-- Embeditor — read-only view is fine; no IsReadWriteText restriction -->
+  <Path name="/SharpDevelop/ViewContent/ClarionGenTextEditor/ContextMenu">
+    <MenuItem id="ListFormatParserGenSeparator"
+              type="Separator"
+              insertbefore="OpenSelectedViaRedFile"/>
+    <Condition name="HasFormatAttribute" action="Exclude">
+      <MenuItem id="ListFormatParserGen"
+                label="Parse List Format"
+                class="ListFormatParser.ParseListFormatCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+    </Condition>
+  </Path>
+
 </AddIn>
