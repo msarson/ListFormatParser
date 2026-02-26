@@ -1,0 +1,27 @@
+<AddIn name        = "ListFormatParser"
+       author      = "msarson"
+       copyright   = ""
+       description = "Parses the FORMAT() attribute of a LIST control into readable column definitions">
+
+  <Manifest>
+    <Identity name="ListFormatParser.Addin" version="1.0"/>
+    <Dependency addin="SharpDevelop" version="2.1"/>
+    <Dependency addin="SoftVelocity.ClarionBinding"/>
+  </Manifest>
+
+  <Runtime>
+    <Import assembly="ListFormatParser.dll"/>
+  </Runtime>
+
+  <!-- CLW source editor context menu -->
+  <Path name="/SharpDevelop/ViewContent/ClarionTextEditor/ContextMenu">
+    <MenuItem id="ListFormatParserSeparator"
+              type="Separator"
+              insertbefore="OpenSelectedViaRedFile"/>
+    <MenuItem id="ListFormatParser"
+              label="Parse List Format"
+              class="ListFormatParser.ParseListFormatCommand"
+              insertbefore="OpenSelectedViaRedFile"/>
+  </Path>
+
+</AddIn>
