@@ -121,8 +121,11 @@ namespace ListFormatParser
         // -----------------------------------------------------------------------
 
         /// <summary>
-        /// Joins the block lines into a single flat string, recording for every
-        /// character in the flat string which (line, col) it came from originally.
+        /// Joins continuation lines into a single flat string.
+        /// For each segment of real content, records (flatStart, origLine, origColStart, length)
+        /// so any flat position can be mapped back to its document offset.
+        ///
+        /// Mirrors the Flattener join logic: continuation lines are TrimStart'd.
         /// </summary>
         private static string BuildFlatWithMap(
             string[] lines, int start, int end, out FlatMap map)
@@ -136,30 +139,24 @@ namespace ListFormatParser
                 int    pipe = ClarionCodeParser.FindContinuationPipe(line);
                 int    len  = pipe >= 0 ? pipe : line.Length;
 
-                // Trim trailing whitespace before the pipe
-                string part = line.Substring(0, len).TrimEnd();
+                // Continuation lines are joined with leading whitespace stripped
+                // (matches how Flattener.cs works)
+                int colStart = (i > start) ? (line.Length - line.TrimStart().Length) : 0;
+                if (colStart > len) colStart = len;
 
-                // Join: add a space between parts if needed
-                if (sb.Length > 0 && part.Length > 0 && sb[sb.Length - 1] != ' ')
-                {
-                    // The space is synthetic — map it to start of next line
-                    map.Add(i, 0);
+                // Extract content, trim trailing whitespace before the pipe
+                string part = line.Substring(colStart, len - colStart).TrimEnd();
+                if (part.Length == 0) continue;
+
+                // Add a synthetic joining space (not tracked — won't land on FORMAT chars)
+                if (sb.Length > 0 && sb[sb.Length - 1] != ' ' && part[0] != ' ')
                     sb.Append(' ');
-                }
 
-                // Record each character's original (line, col)
-                // Find where 'part' starts in the original line (trim may remove leading spaces too)
-                int colOffset = line.Length - line.TrimStart().Length;
-                if (i > start) colOffset = 0; // only first-line leading trim matters
-                for (int c = 0; c < part.Length; c++)
-                {
-                    map.Add(i, c + (i == start ? colOffset : (line.Length - line.TrimStart().Length)));
-                    sb.Append(part[c]);
-                }
+                // Register this segment: flatStart = current sb length
+                map.AddSegment(sb.Length, i, colStart, part.Length);
+                sb.Append(part);
             }
 
-            // Collapse 'x' & 'y' within the flat string (updates map accordingly — skip for now;
-            // FORMAT attribute scanning works on the code-only masked version so this is fine)
             return sb.ToString();
         }
 
@@ -192,27 +189,44 @@ namespace ListFormatParser
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Maps character positions in the flattened string back to document offsets.
+    /// Tracks segments of the flat string back to their original (line, col) positions.
+    /// Each segment = a contiguous run of characters from one source line.
     /// </summary>
     internal class FlatMap
     {
-        // Parallel list: flatIndex → (originalLine, originalCol)
-        private readonly List<int> _lines = new List<int>();
-        private readonly List<int> _cols  = new List<int>();
+        private struct Segment
+        {
+            public int FlatStart;
+            public int Length;
+            public int OrigLine;
+            public int OrigColStart; // column in original line where this segment begins
+        }
 
-        public void Add(int line, int col) { _lines.Add(line); _cols.Add(col); }
+        private readonly List<Segment> _segs = new List<Segment>();
 
-        public int Count => _lines.Count;
+        public void AddSegment(int flatStart, int origLine, int origColStart, int length)
+        {
+            _segs.Add(new Segment
+            {
+                FlatStart    = flatStart,
+                Length       = length,
+                OrigLine     = origLine,
+                OrigColStart = origColStart
+            });
+        }
 
         /// <summary>Returns the IDocument character offset for flat position <paramref name="flatPos"/>.</summary>
         public int FlatToDocOffset(int flatPos, IDocument doc)
         {
-            if (flatPos < 0 || flatPos >= _lines.Count) return -1;
-            int line = _lines[flatPos];
-            int col  = _cols[flatPos];
-            if (line >= doc.TotalNumberOfLines) return -1;
-            var seg = doc.GetLineSegment(line);
-            return seg.Offset + col;
+            foreach (var seg in _segs)
+            {
+                if (flatPos >= seg.FlatStart && flatPos < seg.FlatStart + seg.Length)
+                {
+                    int col = seg.OrigColStart + (flatPos - seg.FlatStart);
+                    return doc.GetLineSegment(seg.OrigLine).Offset + col;
+                }
+            }
+            return -1;
         }
     }
 }
