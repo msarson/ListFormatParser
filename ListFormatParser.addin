@@ -15,8 +15,8 @@
     </Import>
   </Runtime>
 
-  <!-- Format menu — surfaces in main Edit→Format AND both editor context menus automatically -->
-  <Path name="/SharpDevelop/Workbench/MainMenu/Edit/Format">
+  <!-- Format submenu — /Edit/Format/Format is the "Format" submenu item inside Edit→Format -->
+  <Path name="/SharpDevelop/Workbench/MainMenu/Edit/Format/Format">
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="CleanListFormat"
                 label="Clean List Format"
