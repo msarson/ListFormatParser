@@ -33,8 +33,8 @@ namespace ListFormatParser
                 }
                 else
                 {
-                    // Close previous literal, add continuation, open new literal
-                    sb.Append("' &\r\n").Append(Indent2).Append(colSpec);
+                    // Close previous literal, Clarion line continuation |, open new literal
+                    sb.Append("' &|\r\n").Append(Indent2).Append(colSpec);
                 }
             }
 
