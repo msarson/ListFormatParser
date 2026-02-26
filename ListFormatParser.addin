@@ -10,18 +10,22 @@
   </Manifest>
 
   <Runtime>
-    <Import assembly="ListFormatParser.dll"/>
+    <Import assembly="ListFormatParser.dll">
+      <ConditionEvaluator name="HasFormatAttribute" class="ListFormatParser.HasFormatAttributeCondition"/>
+    </Import>
   </Runtime>
 
-  <!-- CLW source editor context menu -->
+  <!-- CLW source editor — only shown when caret block contains FORMAT() -->
   <Path name="/SharpDevelop/ViewContent/ClarionTextEditor/ContextMenu">
     <MenuItem id="ListFormatParserSeparator"
               type="Separator"
               insertbefore="OpenSelectedViaRedFile"/>
-    <MenuItem id="ListFormatParser"
-              label="Parse List Format"
-              class="ListFormatParser.ParseListFormatCommand"
-              insertbefore="OpenSelectedViaRedFile"/>
+    <Condition name="HasFormatAttribute" action="Exclude">
+      <MenuItem id="ListFormatParser"
+                label="Parse List Format"
+                class="ListFormatParser.ParseListFormatCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+    </Condition>
   </Path>
 
 </AddIn>
