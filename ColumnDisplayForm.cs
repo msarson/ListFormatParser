@@ -51,7 +51,6 @@ namespace ListFormatParser
             grid.Columns.Add("Align",       "Align");
             grid.Columns.Add("Indent",      "Indent");
             grid.Columns.Add("Modifiers",   "Modifiers");
-            grid.Columns.Add("Meaning",     "Meaning");
             grid.Columns.Add("Header",      "Header");
             grid.Columns.Add("HdrAlign",    "Hdr Align");
             grid.Columns.Add("HdrIndent",   "Hdr Indent");
@@ -69,7 +68,7 @@ namespace ListFormatParser
                 row.Cells["Align"].Value       = col.Alignment;
                 row.Cells["Indent"].Value      = col.Indent;
                 row.Cells["Modifiers"].Value   = col.Modifiers;
-                row.Cells["Meaning"].Value     = ModifierDescriber.Describe(col.Modifiers);
+                row.Cells["Modifiers"].ToolTipText = ModifierDescriber.Describe(col.Modifiers);
                 row.Cells["Header"].Value      = col.Header;
                 row.Cells["HdrAlign"].Value    = col.HeaderAlignment;
                 row.Cells["HdrIndent"].Value   = col.HeaderIndent;
@@ -84,7 +83,7 @@ namespace ListFormatParser
             // Status bar
             var status = new StatusStrip();
             status.Items.Add(new ToolStripStatusLabel(
-                $"{columns.Count} column(s) — right-click to copy"));
+                $"{columns.Count} column(s) — hover Modifiers cell for meaning — right-click to copy"));
 
             // Copy to clipboard on right-click
             var ctxMenu = new ContextMenuStrip();
