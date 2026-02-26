@@ -60,8 +60,6 @@ namespace ListFormatParser
 
             // Right-align the numeric columns
             grid.Columns["Width"].DefaultCellStyle.Alignment    = DataGridViewContentAlignment.MiddleRight;
-            grid.Columns["Indent"].DefaultCellStyle.Alignment   = DataGridViewContentAlignment.MiddleRight;
-            grid.Columns["HdrIndent"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
             foreach (var col in columns)
             {
