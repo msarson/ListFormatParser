@@ -15,33 +15,32 @@
     </Import>
   </Runtime>
 
-  <!-- CLW source editor — only shown when caret block contains FORMAT() -->
+  <!-- Format menu — surfaces in main Edit→Format AND both editor context menus automatically -->
+  <Path name="/SharpDevelop/Workbench/MainMenu/Edit/Format">
+    <Condition name="HasFormatAttribute" action="Exclude">
+      <MenuItem id="CleanListFormat"
+                label="Clean List Format"
+                class="ListFormatParser.CleanListFormatCommand"/>
+    </Condition>
+  </Path>
+
+  <!-- CLW source editor — Parse is an inspection tool, stays in direct context menu -->
   <Path name="/SharpDevelop/ViewContent/ClarionTextEditor/ContextMenu">
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParser"
                 label="Parse List Format"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
-      <MenuItem id="CleanListFormat"
-                label="Clean List Format"
-                class="ListFormatParser.CleanListFormatCommand"
-                insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
   </Path>
 
-  <!-- Embeditor — read-only view is fine for Parse; Clean requires writable -->
+  <!-- Embeditor — Parse available in both read-only and read-write -->
   <Path name="/SharpDevelop/ViewContent/ClarionGenTextEditor/ContextMenu">
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParserGen"
                 label="Parse List Format"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
-      <Condition name="IsReadWriteText" action="Exclude">
-        <MenuItem id="CleanListFormatGen"
-                  label="Clean List Format"
-                  class="ListFormatParser.CleanListFormatCommand"
-                  insertbefore="OpenSelectedViaRedFile"/>
-      </Condition>
     </Condition>
   </Path>
 
