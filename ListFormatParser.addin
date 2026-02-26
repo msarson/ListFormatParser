@@ -22,16 +22,26 @@
                 label="Parse List Format"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
+      <MenuItem id="CleanListFormat"
+                label="Clean List Format"
+                class="ListFormatParser.CleanListFormatCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
   </Path>
 
-  <!-- Embeditor — read-only view is fine; no IsReadWriteText restriction -->
+  <!-- Embeditor — read-only view is fine for Parse; Clean requires writable -->
   <Path name="/SharpDevelop/ViewContent/ClarionGenTextEditor/ContextMenu">
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParserGen"
                 label="Parse List Format"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
+      <Condition name="IsReadWriteText" action="Exclude">
+        <MenuItem id="CleanListFormatGen"
+                  label="Clean List Format"
+                  class="ListFormatParser.CleanListFormatCommand"
+                  insertbefore="OpenSelectedViaRedFile"/>
+      </Condition>
     </Condition>
   </Path>
 
