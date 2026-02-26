@@ -85,6 +85,25 @@ namespace ListFormatParser
             status.Items.Add(new ToolStripStatusLabel(
                 $"{columns.Count} column(s) — hover Modifiers cell for meaning — right-click to copy"));
 
+            // Button panel
+            var btnCopyFormat = new Button
+            {
+                Text    = "Copy FORMAT",
+                Dock    = DockStyle.Right,
+                Width   = 110,
+                Height  = 26,
+                Font    = new Font("Segoe UI", 9f),
+            };
+            btnCopyFormat.Click += (s, e) =>
+            {
+                string fmt = FormatStringGenerator.Generate(columns);
+                System.Windows.Forms.Clipboard.SetText(fmt);
+                status.Items[0].Text = "FORMAT string copied to clipboard.";
+            };
+
+            var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
+            btnPanel.Controls.Add(btnCopyFormat);
+
             // Copy to clipboard on right-click
             var ctxMenu = new ContextMenuStrip();
             ctxMenu.Items.Add("Copy selected row", null, (s, e) => CopySelected(grid));
@@ -93,6 +112,7 @@ namespace ListFormatParser
 
             Controls.Add(grid);
             Controls.Add(sourceBox);
+            Controls.Add(btnPanel);
             Controls.Add(status);
         }
 
