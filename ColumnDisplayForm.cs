@@ -51,6 +51,7 @@ namespace ListFormatParser
             grid.Columns.Add("Align",     "Align");
             grid.Columns.Add("Indent",    "Indent");
             grid.Columns.Add("Modifiers", "Modifiers");
+            grid.Columns.Add("Meaning",   "Meaning");
             grid.Columns.Add("Header",    "Header");
             grid.Columns.Add("Picture",   "Picture");
             grid.Columns.Add("Raw",       "Format Spec");
@@ -67,6 +68,7 @@ namespace ListFormatParser
                 row.Cells["Align"].Value     = col.Alignment;
                 row.Cells["Indent"].Value    = col.Indent;
                 row.Cells["Modifiers"].Value = col.Modifiers;
+                row.Cells["Meaning"].Value   = ModifierDescriber.Describe(col.Modifiers);
                 row.Cells["Header"].Value    = col.Header;
                 row.Cells["Picture"].Value   = col.Picture;
                 row.Cells["Raw"].Value       = col.RawSpec;
