@@ -46,32 +46,37 @@ namespace ListFormatParser
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
             };
 
-            grid.Columns.Add("Col",       "#");
-            grid.Columns.Add("Width",     "Width");
-            grid.Columns.Add("Align",     "Align");
-            grid.Columns.Add("Indent",    "Indent");
-            grid.Columns.Add("Modifiers", "Modifiers");
-            grid.Columns.Add("Meaning",   "Meaning");
-            grid.Columns.Add("Header",    "Header");
-            grid.Columns.Add("Picture",   "Picture");
-            grid.Columns.Add("Raw",       "Format Spec");
+            grid.Columns.Add("Col",         "#");
+            grid.Columns.Add("Width",       "Width");
+            grid.Columns.Add("Align",       "Align");
+            grid.Columns.Add("Indent",      "Indent");
+            grid.Columns.Add("Modifiers",   "Modifiers");
+            grid.Columns.Add("Meaning",     "Meaning");
+            grid.Columns.Add("Header",      "Header");
+            grid.Columns.Add("HdrAlign",    "Hdr Align");
+            grid.Columns.Add("HdrIndent",   "Hdr Indent");
+            grid.Columns.Add("Picture",     "Picture");
+            grid.Columns.Add("Raw",         "Format Spec");
 
             // Right-align the numeric columns
-            grid.Columns["Width"].DefaultCellStyle.Alignment  = DataGridViewContentAlignment.MiddleRight;
-            grid.Columns["Indent"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            grid.Columns["Width"].DefaultCellStyle.Alignment    = DataGridViewContentAlignment.MiddleRight;
+            grid.Columns["Indent"].DefaultCellStyle.Alignment   = DataGridViewContentAlignment.MiddleRight;
+            grid.Columns["HdrIndent"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
             foreach (var col in columns)
             {
                 var row = grid.Rows[grid.Rows.Add()];
-                row.Cells["Col"].Value       = col.ColLabel;
-                row.Cells["Width"].Value     = col.Width;
-                row.Cells["Align"].Value     = col.Alignment;
-                row.Cells["Indent"].Value    = col.Indent;
-                row.Cells["Modifiers"].Value = col.Modifiers;
-                row.Cells["Meaning"].Value   = ModifierDescriber.Describe(col.Modifiers);
-                row.Cells["Header"].Value    = col.Header;
-                row.Cells["Picture"].Value   = col.Picture;
-                row.Cells["Raw"].Value       = col.RawSpec;
+                row.Cells["Col"].Value         = col.ColLabel;
+                row.Cells["Width"].Value       = col.Width;
+                row.Cells["Align"].Value       = col.Alignment;
+                row.Cells["Indent"].Value      = col.Indent;
+                row.Cells["Modifiers"].Value   = col.Modifiers;
+                row.Cells["Meaning"].Value     = ModifierDescriber.Describe(col.Modifiers);
+                row.Cells["Header"].Value      = col.Header;
+                row.Cells["HdrAlign"].Value    = col.HeaderAlignment;
+                row.Cells["HdrIndent"].Value   = col.HeaderIndent;
+                row.Cells["Picture"].Value     = col.Picture;
+                row.Cells["Raw"].Value         = col.RawSpec;
 
                 // Highlight group rows
                 if (col.IsGroupStart || col.IsGroupEnd)

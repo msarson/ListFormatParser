@@ -69,6 +69,18 @@ namespace ListFormatParser
                     i++; // skip opening ~
                     col.Header = ReadUntilUnescaped(rawFormatString, ref i, '~');
                     if (i < n) i++; // skip closing ~
+
+                    // Optional header alignment (L R C D) immediately after closing ~
+                    if (i < n && "LRCDlrcd".IndexOf(rawFormatString[i]) >= 0)
+                        col.HeaderAlignment = char.ToUpper(rawFormatString[i++]).ToString();
+
+                    // Optional header indent (n) after header alignment
+                    if (i < n && rawFormatString[i] == '(')
+                    {
+                        i++; // skip opening (
+                        col.HeaderIndent = ReadBalancedParens(rawFormatString, ref i);
+                        if (i < n && rawFormatString[i] == ')') i++; // skip closing )
+                    }
                 }
 
                 // --- Picture @...@ (may contain ~tilde~ inside) ---
