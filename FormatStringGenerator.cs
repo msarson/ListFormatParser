@@ -15,9 +15,13 @@ namespace ListFormatParser
     public static class FormatStringGenerator
     {
         private const string Indent1 = "FORMAT('";   // opening — 8 chars
-        private const string Indent2 = "        '";  // continuation alignment
 
-        public static string Generate(List<FormatColumn> columns)
+        /// <param name="continuationIndent">
+        /// Spaces to place before each continuation line's opening quote.
+        /// Should equal the column of FORMAT( in the source so all quotes align.
+        /// Defaults to 8 spaces (same width as "FORMAT('").
+        /// </param>
+        public static string Generate(List<FormatColumn> columns, string continuationIndent = "        ")
         {
             if (columns == null || columns.Count == 0) return "FORMAT('')";
 
@@ -33,8 +37,8 @@ namespace ListFormatParser
                 }
                 else
                 {
-                    // Close previous literal, Clarion line continuation |, open new literal
-                    sb.Append("' &|\r\n").Append(Indent2).Append(colSpec);
+                    // Close previous literal, Clarion line continuation |, open new literal aligned
+                    sb.Append("' &|\r\n").Append(continuationIndent).Append('\'').Append(colSpec);
                 }
             }
 

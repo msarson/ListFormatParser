@@ -68,8 +68,20 @@ namespace ListFormatParser
                 return;
             }
 
-            // 5. Generate the clean replacement (e.g. FORMAT('...' &|\n       '...'))
-            string cleanFormat = FormatStringGenerator.Generate(columns);
+            // 5. Generate the clean replacement aligned to FORMAT's column
+            //    FORMAT( is 7 chars, so the opening ' is at col: begAtt + 7
+            int    formatCol   = map.FlatToDocColumn(begAtt);
+            string contIndent  = formatCol >= 0 ? new string(' ', formatCol + 7) : "        ";
+            string cleanFormat = FormatStringGenerator.Generate(columns, contIndent);
+
+            // If there is content after FORMAT(...) on the same logical line,
+            // add a line continuation so trailing attributes (,FROM etc.) go on their own line.
+            string afterParen = flat.Substring(endParen + 1).TrimStart();
+            if (afterParen.Length > 0)
+            {
+                string trailingIndent = new string(' ', formatCol >= 0 ? formatCol : 0);
+                cleanFormat += " |\r\n" + trailingIndent;
+            }
 
             // 6. Map flat positions back to document offsets
             //    begAtt = start of "FORMAT", endParen = closing ')'
@@ -213,6 +225,15 @@ namespace ListFormatParser
                 OrigLine     = origLine,
                 OrigColStart = origColStart
             });
+        }
+
+        /// <summary>Returns the column (within its source line) for flat position <paramref name="flatPos"/>.</summary>
+        public int FlatToDocColumn(int flatPos)
+        {
+            foreach (var seg in _segs)
+                if (flatPos >= seg.FlatStart && flatPos < seg.FlatStart + seg.Length)
+                    return seg.OrigColStart + (flatPos - seg.FlatStart);
+            return -1;
         }
 
         /// <summary>Returns the IDocument character offset for flat position <paramref name="flatPos"/>.</summary>
