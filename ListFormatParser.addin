@@ -15,11 +15,16 @@
     </Import>
   </Runtime>
 
+  <Path name="/Workspace/Autostart">
+    <Class id="ListFormatParserRegisterIcons" class="ListFormatParser.RegisterIconsCommand"/>
+  </Path>
+
   <!-- Format submenu — /Edit/Format/Format is the "Format" submenu item inside Edit→Format -->
   <Path name="/SharpDevelop/Workbench/MainMenu/Edit/Format/Format">
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="CleanListFormat"
                 label="Clean List Format"
+                icon="ListFormatParser.ListFormatIcon"
                 class="ListFormatParser.CleanListFormatCommand"/>
     </Condition>
   </Path>
@@ -29,6 +34,7 @@
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParser"
                 label="Parse List Format"
+                icon="ListFormatParser.ListFormatIcon"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
@@ -39,6 +45,7 @@
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParserGen"
                 label="Parse List Format"
+                icon="ListFormatParser.ListFormatIcon"
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
