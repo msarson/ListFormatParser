@@ -14,8 +14,12 @@ A Clarion IDE addin that parses the `FORMAT()` attribute of a `LIST` control and
 
 ## Installation
 
-1. Download `ListFormatParser-vX.X.X.zip` from [Releases](../../releases)
-2. Extract into `C:\Clarion\Clarion11.1\accessory\addins\ListFormatParser\`  
+The easiest way to install is via **[Addin Finder](https://github.com/msarson/ClarionAddinFinder)** — the Clarion IDE addin manager. Search for *List Format Parser* and click Install.
+
+**Manual install:**
+
+1. Download `ListFormatParser.dll` and `ListFormatParser.addin` from [Releases](../../releases)
+2. Copy both files into `C:\Clarion\Clarion11.1\accessory\addins\ListFormatParser\`  
    _(adjust path for your Clarion version)_
 3. Restart the Clarion IDE
 
