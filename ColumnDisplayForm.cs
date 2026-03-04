@@ -37,10 +37,11 @@ namespace ListFormatParser
 
             // ── Status bar ──────────────────────────────────────────────────
             _status      = new StatusStrip();
+            bool fromOnly = columns.Count == 0 && fromEntries != null && fromEntries.Count > 0;
             _statusLabel = new ToolStripStatusLabel(
-                columns.Count > 0
-                    ? $"{columns.Count} column(s) — hover Modifiers cell for tooltip — use Explain tab for full detail"
-                    : "Hover over rows for detail — use tabs below for copy options");
+                fromOnly
+                    ? $"{(fromEntries?.Count ?? 0)} FROM entries — use tabs below to copy as CASE or CHOOSE"
+                    : $"{columns.Count} column(s) — hover Modifiers cell for tooltip — use Explain tab for full detail");
             _status.Items.Add(_statusLabel);
             _defaultStatus = _statusLabel.Text;
 
