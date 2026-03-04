@@ -4,7 +4,7 @@
        description = "Parses the FORMAT() attribute of a LIST control into readable column definitions">
 
   <Manifest>
-    <Identity name="ListFormatParser.Addin" version="1.2"/>
+    <Identity name="ListFormatParser.Addin" version="1.2.1"/>
     <Dependency addin="SharpDevelop" version="2.1"/>
     <Dependency addin="SoftVelocity.ClarionBinding"/>
   </Manifest>

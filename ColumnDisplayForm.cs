@@ -14,6 +14,15 @@ namespace ListFormatParser
     {
         private readonly StatusStrip        _status;
         private readonly ToolStripStatusLabel _statusLabel;
+        private string _defaultStatus;
+
+        private void SetStatus(string msg)
+        {
+            _statusLabel.Text = msg;
+            var t = new System.Windows.Forms.Timer { Interval = 3000 };
+            t.Tick += (s, e) => { _statusLabel.Text = _defaultStatus; t.Stop(); t.Dispose(); };
+            t.Start();
+        }
 
         public ColumnDisplayForm(List<FormatColumn> columns, string flatSourceLine,
                                  List<FromParser.FromEntry> fromEntries = null,
@@ -29,8 +38,11 @@ namespace ListFormatParser
             // ── Status bar ──────────────────────────────────────────────────
             _status      = new StatusStrip();
             _statusLabel = new ToolStripStatusLabel(
-                $"{columns.Count} column(s) — select a row to see modifier detail below");
+                columns.Count > 0
+                    ? $"{columns.Count} column(s) — hover Modifiers cell for tooltip — use Explain tab for full detail"
+                    : "Hover over rows for detail — use tabs below for copy options");
             _status.Items.Add(_statusLabel);
+            _defaultStatus = _statusLabel.Text;
 
             // ── Source strip ────────────────────────────────────────────────
             var sourceBox = new TextBox
@@ -177,7 +189,7 @@ namespace ListFormatParser
             btnCopy.Click += (s, e) =>
             {
                 Clipboard.SetText(FormatStringGenerator.Generate(columns));
-                _statusLabel.Text = "FORMAT string copied to clipboard.";
+                SetStatus("FORMAT string copied to clipboard.");
             };
             var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
             btnPanel.Controls.Add(btnCopy);
@@ -269,7 +281,7 @@ namespace ListFormatParser
             };
 
             var btnCopy = new Button { Text = "Copy Explain", Width = 110, Height = 26, Font = new Font("Segoe UI", 9f), Dock = DockStyle.Right };
-            btnCopy.Click += (s, e) => { Clipboard.SetText(txt.Text); _statusLabel.Text = "Explain text copied."; };
+            btnCopy.Click += (s, e) => { Clipboard.SetText(txt.Text); SetStatus("Explain text copied."); };
             var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
             btnPanel.Controls.Add(btnCopy);
 
@@ -331,8 +343,8 @@ namespace ListFormatParser
             // Button bar
             var btnCopyFmt    = new Button { Text = "Copy FORMAT",  Width = 110, Height = 26, Font = new Font("Segoe UI", 9f) };
             var btnCopyFields = new Button { Text = "Copy #FIELDS", Width = 110, Height = 26, Font = new Font("Segoe UI", 9f) };
-            btnCopyFmt.Click    += (s, e) => { Clipboard.SetText(fmtText);            _statusLabel.Text = "FORMAT copied."; };
-            btnCopyFields.Click += (s, e) => { Clipboard.SetText(txtFields.Text);     _statusLabel.Text = "#FIELDS copied."; };
+            btnCopyFmt.Click    += (s, e) => { Clipboard.SetText(fmtText);            SetStatus("FORMAT copied."); };
+            btnCopyFields.Click += (s, e) => { Clipboard.SetText(txtFields.Text);     SetStatus("#FIELDS copied."); };
 
             var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
             btnCopyFmt.Left    = 4;  btnCopyFmt.Top    = 3;
@@ -397,8 +409,8 @@ namespace ListFormatParser
             // Button bar
             var btnCopyFrom = new Button { Text = "Copy FROM lines", Width = 120, Height = 26, Font = new Font("Segoe UI", 9f) };
             var btnCopyCase = new Button { Text = "Copy CASE",       Width = 100, Height = 26, Font = new Font("Segoe UI", 9f) };
-            btnCopyFrom.Click += (s, e) => { Clipboard.SetText(txtFrom.Text); _statusLabel.Text = "FROM lines copied."; };
-            btnCopyCase.Click += (s, e) => { Clipboard.SetText(caseCode);     _statusLabel.Text = "CASE code copied."; };
+            btnCopyFrom.Click += (s, e) => { Clipboard.SetText(txtFrom.Text); SetStatus("FROM lines copied."); };
+            btnCopyCase.Click += (s, e) => { Clipboard.SetText(caseCode);     SetStatus("CASE code copied."); };
 
             var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
             btnCopyFrom.Left = 4;   btnCopyFrom.Top = 3;

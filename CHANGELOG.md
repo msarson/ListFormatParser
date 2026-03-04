@@ -2,7 +2,13 @@
 
 All notable changes to List Format Parser are documented here.
 
-## [1.2.0] - 2026-03-04
+## [1.2.1] - 2026-03-04
+
+### Fixed
+- Status bar initial message no longer references the removed modifier detail text box
+- Status bar copy-action messages now auto-clear after 3 seconds
+
+
 
 ### Added
 - **Tabbed dialog** — Parse List Format now opens a resizable tabbed window
