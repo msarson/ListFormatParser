@@ -1,34 +1,86 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Text;
 using System.Windows.Forms;
 
 namespace ListFormatParser
 {
     /// <summary>
-    /// Simple WinForms dialog showing parsed FORMAT() columns in a grid.
+    /// Tabbed WinForms dialog showing parsed FORMAT() columns.
+    /// Tabs: Columns grid, Explain (plain-English per column), FORMAT Lines, FROM.
     /// </summary>
     internal class ColumnDisplayForm : Form
     {
-        public ColumnDisplayForm(List<FormatColumn> columns, string flatSourceLine)
-        {
-            Text            = "List Format Columns";
-            Size            = new Size(1000, 480);
-            StartPosition   = FormStartPosition.CenterScreen;
-            MinimizeBox     = false;
-            Font            = new Font("Segoe UI", 9f);
+        private readonly StatusStrip        _status;
+        private readonly ToolStripStatusLabel _statusLabel;
 
-            // Source context strip at top
+        public ColumnDisplayForm(List<FormatColumn> columns, string flatSourceLine,
+                                 List<FromParser.FromEntry> fromEntries = null,
+                                 string useVar = null, bool fromFirst = false)
+        {
+            Text          = "List Format Parser";
+            Size          = new Size(1060, 580);
+            MinimumSize   = new Size(700, 400);
+            StartPosition = FormStartPosition.CenterScreen;
+            MinimizeBox   = false;
+            Font          = new Font("Segoe UI", 9f);
+
+            // ── Status bar ──────────────────────────────────────────────────
+            _status      = new StatusStrip();
+            _statusLabel = new ToolStripStatusLabel(
+                $"{columns.Count} column(s) — select a row to see modifier detail below");
+            _status.Items.Add(_statusLabel);
+
+            // ── Source strip ────────────────────────────────────────────────
             var sourceBox = new TextBox
             {
-                Text      = flatSourceLine,
-                ReadOnly  = true,
-                Dock      = DockStyle.Top,
-                Font      = new Font("Consolas", 8.5f),
-                BackColor = SystemColors.ControlLight,
+                Text       = flatSourceLine,
+                ReadOnly   = true,
+                Dock       = DockStyle.Top,
+                Font       = new Font("Consolas", 8.5f),
+                BackColor  = SystemColors.ControlLight,
                 ScrollBars = ScrollBars.Horizontal,
+                Height     = 22,
             };
 
-            // Column grid
+            // ── Tab control (Explain, FORMAT Lines, FROM) ────────────────────
+            var tabs = new TabControl { Dock = DockStyle.Fill };
+            tabs.TabPages.Add(BuildExplainTab(columns));
+            tabs.TabPages.Add(BuildFormatLinesTab(columns, flatSourceLine));
+            if (fromEntries != null && fromEntries.Count > 0)
+                tabs.TabPages.Add(BuildFromTab(fromEntries, useVar ?? "ListUseVariable"));
+
+            if (fromFirst && tabs.TabCount > 0)
+                tabs.SelectedIndex = tabs.TabCount - 1;
+
+            // ── Top pane: columns grid OR simple FROM grid ───────────────────
+            Control topPane = (fromEntries != null && fromEntries.Count > 0 && columns.Count == 0)
+                ? (Control)BuildFromGrid(fromEntries)
+                : (Control)BuildColumnsGrid(columns);
+
+            // ── Split: grid on top, tabs on bottom ──────────────────────────
+            var split = new SplitContainer
+            {
+                Dock             = DockStyle.Fill,
+                Orientation      = Orientation.Horizontal,
+                SplitterDistance = 220,
+            };
+            split.Panel1.Controls.Add(topPane);
+            split.Panel2.Controls.Add(tabs);
+
+            Controls.Add(split);
+            Controls.Add(sourceBox);
+            Controls.Add(_status);
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // FROM entries grid (top pane — FROM-only mode)
+        // ════════════════════════════════════════════════════════════════════
+        private Panel BuildFromGrid(List<FromParser.FromEntry> entries)
+        {
+            var panel = new Panel { Dock = DockStyle.Fill };
+
             var grid = new DataGridView
             {
                 Dock                        = DockStyle.Fill,
@@ -46,94 +98,333 @@ namespace ListFormatParser
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
             };
 
-            grid.Columns.Add("Col",         "#");
-            grid.Columns.Add("Width",       "Width");
-            grid.Columns.Add("Align",       "Align");
-            grid.Columns.Add("Indent",      "Indent");
-            grid.Columns.Add("Modifiers",   "Modifiers");
-            grid.Columns.Add("Header",      "Header");
-            grid.Columns.Add("HdrAlign",    "Hdr Align");
-            grid.Columns.Add("HdrIndent",   "Hdr Indent");
-            grid.Columns.Add("Picture",     "Picture");
-            grid.Columns.Add("Raw",         "Format Spec");
+            grid.Columns.Add("No",      "#");
+            grid.Columns.Add("Display", "Display");
+            grid.Columns.Add("Value",   "Value");
 
-            // Right-align the numeric columns
-            grid.Columns["Width"].DefaultCellStyle.Alignment    = DataGridViewContentAlignment.MiddleRight;
+            grid.Columns["No"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var row = grid.Rows[grid.Rows.Add()];
+                row.Cells["No"].Value      = i + 1;
+                row.Cells["Display"].Value = entries[i].Display;
+                row.Cells["Value"].Value   = entries[i].Value ?? "";
+            }
+
+            panel.Controls.Add(grid);
+            return panel;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // Columns grid (top pane — not a tab)
+        // ════════════════════════════════════════════════════════════════════
+        private Panel BuildColumnsGrid(List<FormatColumn> columns)
+        {
+            var panel = new Panel { Dock = DockStyle.Fill };
+
+            var grid = new DataGridView
+            {
+                Dock                        = DockStyle.Fill,
+                ReadOnly                    = true,
+                AllowUserToAddRows          = false,
+                AllowUserToResizeRows       = false,
+                AutoSizeColumnsMode         = DataGridViewAutoSizeColumnsMode.AllCells,
+                SelectionMode               = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible           = false,
+                BackgroundColor             = SystemColors.Window,
+                GridColor                   = SystemColors.ControlLight,
+                Font                        = new Font("Consolas", 9f),
+                BorderStyle                 = BorderStyle.None,
+                CellBorderStyle             = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                MultiSelect                 = false,
+            };
+
+            grid.Columns.Add("Col",       "#");
+            grid.Columns.Add("Width",     "Width");
+            grid.Columns.Add("Align",     "Align");
+            grid.Columns.Add("Indent",    "Indent");
+            grid.Columns.Add("Modifiers", "Modifiers");
+            grid.Columns.Add("Header",    "Header");
+            grid.Columns.Add("HdrAlign",  "Hdr Align");
+            grid.Columns.Add("HdrIndent", "Hdr Indent");
+            grid.Columns.Add("Picture",   "Picture");
+            grid.Columns.Add("Raw",       "Format Spec");
+
+            grid.Columns["Width"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
             foreach (var col in columns)
             {
                 var row = grid.Rows[grid.Rows.Add()];
-                row.Cells["Col"].Value         = col.ColLabel;
-                row.Cells["Width"].Value       = col.Width;
-                row.Cells["Align"].Value       = col.Alignment;
-                row.Cells["Indent"].Value      = col.Indent;
-                row.Cells["Modifiers"].Value   = col.Modifiers;
+                row.Cells["Col"].Value       = col.ColLabel;
+                row.Cells["Width"].Value     = col.Width;
+                row.Cells["Align"].Value     = col.Alignment;
+                row.Cells["Indent"].Value    = col.Indent;
+                row.Cells["Modifiers"].Value = col.Modifiers;
                 row.Cells["Modifiers"].ToolTipText = ModifierDescriber.Describe(col.Modifiers);
-                row.Cells["Header"].Value      = col.Header;
-                row.Cells["HdrAlign"].Value    = col.HeaderAlignment;
-                row.Cells["HdrIndent"].Value   = col.HeaderIndent;
-                row.Cells["Picture"].Value     = col.Picture;
-                row.Cells["Raw"].Value         = col.RawSpec;
-
-                // Highlight group rows
+                row.Cells["Header"].Value    = col.Header;
+                row.Cells["HdrAlign"].Value  = col.HeaderAlignment;
+                row.Cells["HdrIndent"].Value = col.HeaderIndent;
+                row.Cells["Picture"].Value   = col.Picture;
+                row.Cells["Raw"].Value       = col.RawSpec;
                 if (col.IsGroupStart || col.IsGroupEnd)
                     row.DefaultCellStyle.BackColor = Color.FromArgb(240, 245, 255);
             }
 
-            // Status bar
-            var status = new StatusStrip();
-            status.Items.Add(new ToolStripStatusLabel(
-                $"{columns.Count} column(s) — hover Modifiers cell for meaning — right-click to copy"));
-
-            // Button panel
-            var btnCopyFormat = new Button
+            // Button bar
+            var btnCopy = new Button { Text = "Copy FORMAT", Width = 110, Height = 26, Font = new Font("Segoe UI", 9f), Dock = DockStyle.Right };
+            btnCopy.Click += (s, e) =>
             {
-                Text    = "Copy FORMAT",
-                Dock    = DockStyle.Right,
-                Width   = 110,
-                Height  = 26,
-                Font    = new Font("Segoe UI", 9f),
+                Clipboard.SetText(FormatStringGenerator.Generate(columns));
+                _statusLabel.Text = "FORMAT string copied to clipboard.";
             };
-            btnCopyFormat.Click += (s, e) =>
-            {
-                string fmt = FormatStringGenerator.Generate(columns);
-                System.Windows.Forms.Clipboard.SetText(fmt);
-                status.Items[0].Text = "FORMAT string copied to clipboard.";
-            };
-
             var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
-            btnPanel.Controls.Add(btnCopyFormat);
+            btnPanel.Controls.Add(btnCopy);
 
-            // Copy to clipboard on right-click
-            var ctxMenu = new ContextMenuStrip();
-            ctxMenu.Items.Add("Copy selected row", null, (s, e) => CopySelected(grid));
-            ctxMenu.Items.Add("Copy all", null, (s, e) => CopyAll(grid));
-            grid.ContextMenuStrip = ctxMenu;
+            // Context menu
+            var ctx = new ContextMenuStrip();
+            ctx.Items.Add("Copy selected row", null, (s, e) => CopyGridSelected(grid));
+            ctx.Items.Add("Copy all rows",     null, (s, e) => { grid.SelectAll(); CopyGridSelected(grid); grid.ClearSelection(); });
+            grid.ContextMenuStrip = ctx;
 
-            Controls.Add(grid);
-            Controls.Add(sourceBox);
-            Controls.Add(btnPanel);
-            Controls.Add(status);
+            panel.Controls.Add(grid);
+            panel.Controls.Add(btnPanel);
+            return panel;
         }
 
-        private void CopySelected(DataGridView grid)
+        // ════════════════════════════════════════════════════════════════════
+        // Tab 1 — Explain
+        // ════════════════════════════════════════════════════════════════════
+        private TabPage BuildExplainTab(List<FormatColumn> columns)
+        {
+            var page = new TabPage("Explain");
+            var sb   = new StringBuilder();
+
+            foreach (var col in columns)
+            {
+                // Header line
+                sb.Append("! ── ");
+                if (col.IsGroupStart)      sb.Append("Group start");
+                else if (col.IsGroupEnd)   sb.Append("Group end");
+                else                       sb.Append("Column ").Append(col.ColumnNumber);
+
+                if (!string.IsNullOrEmpty(col.Header))
+                    sb.Append("  ~").Append(col.Header).Append("~");
+                sb.AppendLine();
+
+                // Width + alignment
+                if (!string.IsNullOrEmpty(col.Width))
+                    sb.Append("!   Width:     ").AppendLine(col.Width);
+                if (!string.IsNullOrEmpty(col.Alignment))
+                {
+                    string alignDesc = col.Alignment == "L" ? "Left"
+                                     : col.Alignment == "R" ? "Right"
+                                     : col.Alignment == "C" ? "Centre"
+                                     : col.Alignment == "D" ? "Default"
+                                     : col.Alignment;
+                    sb.Append("!   Align:     ").AppendLine(alignDesc);
+                }
+                if (!string.IsNullOrEmpty(col.Indent))
+                    sb.Append("!   Indent:    ").AppendLine(col.Indent);
+
+                // Header detail
+                if (col.Header != null)
+                {
+                    sb.Append("!   Header:    '").Append(col.Header).AppendLine("'");
+                    if (!string.IsNullOrEmpty(col.HeaderAlignment))
+                        sb.Append("!   Hdr align: ").AppendLine(col.HeaderAlignment);
+                    if (!string.IsNullOrEmpty(col.HeaderIndent))
+                        sb.Append("!   Hdr indent:").AppendLine(col.HeaderIndent);
+                }
+
+                // Picture
+                if (!string.IsNullOrEmpty(col.Picture))
+                    sb.Append("!   Picture:   @").Append(col.Picture).AppendLine("@");
+
+                // Modifiers — expanded
+                if (!string.IsNullOrEmpty(col.Modifiers))
+                {
+                    sb.Append("!   Modifiers: ").AppendLine(col.Modifiers);
+                    string desc = ModifierDescriber.Describe(col.Modifiers);
+                    if (!string.IsNullOrEmpty(desc))
+                        foreach (var part in desc.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries))
+                            sb.Append("!             • ").AppendLine(part);
+                }
+
+                // Raw spec
+                sb.Append("!   Spec:      ").AppendLine(col.RawSpec);
+                sb.AppendLine("!");
+            }
+
+            var txt = new TextBox
+            {
+                Dock       = DockStyle.Fill,
+                ReadOnly   = true,
+                Multiline  = true,
+                ScrollBars = ScrollBars.Both,
+                Font       = new Font("Consolas", 9f),
+                Text       = sb.ToString(),
+                WordWrap   = false,
+            };
+
+            var btnCopy = new Button { Text = "Copy Explain", Width = 110, Height = 26, Font = new Font("Segoe UI", 9f), Dock = DockStyle.Right };
+            btnCopy.Click += (s, e) => { Clipboard.SetText(txt.Text); _statusLabel.Text = "Explain text copied."; };
+            var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
+            btnPanel.Controls.Add(btnCopy);
+
+            page.Controls.Add(txt);
+            page.Controls.Add(btnPanel);
+            return page;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // Tab 2 — FORMAT Lines
+        // ════════════════════════════════════════════════════════════════════
+        private TabPage BuildFormatLinesTab(List<FormatColumn> columns, string flatSource)
+        {
+            var page = new TabPage("FORMAT Lines");
+
+            // Left: FORMAT one-per-line
+            var fmtText = FormatStringGenerator.Generate(columns);
+
+            var txtFmt = new TextBox
+            {
+                ReadOnly   = true,
+                Multiline  = true,
+                ScrollBars = ScrollBars.Both,
+                Font       = new Font("Consolas", 9f),
+                Text       = fmtText,
+                WordWrap   = false,
+                Dock       = DockStyle.Fill,
+            };
+
+            // Right: #FIELDS list (column number → field number in source)
+            var sbFields = new StringBuilder();
+            int fldNo = 1;
+            foreach (var col in columns)
+            {
+                if (col.IsGroupStart || col.IsGroupEnd) continue;
+                sbFields.AppendLine($"#{fldNo++}  ! col {col.ColLabel}  {col.Header ?? ""}".TrimEnd());
+            }
+
+            var txtFields = new TextBox
+            {
+                ReadOnly   = true,
+                Multiline  = true,
+                ScrollBars = ScrollBars.Both,
+                Font       = new Font("Consolas", 9f),
+                Text       = sbFields.ToString(),
+                WordWrap   = false,
+                Dock       = DockStyle.Fill,
+            };
+
+            var split = new SplitContainer
+            {
+                Dock        = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = 680,
+            };
+            split.Panel1.Controls.Add(txtFmt);
+            split.Panel2.Controls.Add(txtFields);
+
+            // Button bar
+            var btnCopyFmt    = new Button { Text = "Copy FORMAT",  Width = 110, Height = 26, Font = new Font("Segoe UI", 9f) };
+            var btnCopyFields = new Button { Text = "Copy #FIELDS", Width = 110, Height = 26, Font = new Font("Segoe UI", 9f) };
+            btnCopyFmt.Click    += (s, e) => { Clipboard.SetText(fmtText);            _statusLabel.Text = "FORMAT copied."; };
+            btnCopyFields.Click += (s, e) => { Clipboard.SetText(txtFields.Text);     _statusLabel.Text = "#FIELDS copied."; };
+
+            var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
+            btnCopyFmt.Left    = 4;  btnCopyFmt.Top    = 3;
+            btnCopyFields.Left = 120; btnCopyFields.Top = 3;
+            btnPanel.Controls.Add(btnCopyFmt);
+            btnPanel.Controls.Add(btnCopyFields);
+
+            page.Controls.Add(split);
+            page.Controls.Add(btnPanel);
+            return page;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // Tab 3 — FROM
+        // ════════════════════════════════════════════════════════════════════
+        private TabPage BuildFromTab(List<FromParser.FromEntry> entries, string useVar)
+        {
+            var page = new TabPage("FROM");
+
+            // Left: FROM entries one per line
+            var sbFrom = new StringBuilder();
+            foreach (var e in entries)
+            {
+                sbFrom.Append(e.Display);
+                if (e.Value != null) sbFrom.Append("  (#").Append(e.Value).Append(")");
+                sbFrom.AppendLine();
+            }
+
+            var txtFrom = new TextBox
+            {
+                ReadOnly   = true,
+                Multiline  = true,
+                ScrollBars = ScrollBars.Both,
+                Font       = new Font("Consolas", 9f),
+                Text       = sbFrom.ToString(),
+                WordWrap   = false,
+                Dock       = DockStyle.Fill,
+            };
+
+            // Right: CASE output
+            string caseCode = CopyFromCaseCommand.GenerateCaseCode(entries, useVar);
+            var txtCase = new TextBox
+            {
+                ReadOnly   = true,
+                Multiline  = true,
+                ScrollBars = ScrollBars.Both,
+                Font       = new Font("Consolas", 9f),
+                Text       = caseCode,
+                WordWrap   = false,
+                Dock       = DockStyle.Fill,
+            };
+
+            var split = new SplitContainer
+            {
+                Dock        = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = 300,
+            };
+            split.Panel1.Controls.Add(txtFrom);
+            split.Panel2.Controls.Add(txtCase);
+
+            // Button bar
+            var btnCopyFrom = new Button { Text = "Copy FROM lines", Width = 120, Height = 26, Font = new Font("Segoe UI", 9f) };
+            var btnCopyCase = new Button { Text = "Copy CASE",       Width = 100, Height = 26, Font = new Font("Segoe UI", 9f) };
+            btnCopyFrom.Click += (s, e) => { Clipboard.SetText(txtFrom.Text); _statusLabel.Text = "FROM lines copied."; };
+            btnCopyCase.Click += (s, e) => { Clipboard.SetText(caseCode);     _statusLabel.Text = "CASE code copied."; };
+
+            var btnPanel = new Panel { Dock = DockStyle.Bottom, Height = 32 };
+            btnCopyFrom.Left = 4;   btnCopyFrom.Top = 3;
+            btnCopyCase.Left = 130; btnCopyCase.Top = 3;
+            btnPanel.Controls.Add(btnCopyFrom);
+            btnPanel.Controls.Add(btnCopyCase);
+
+            page.Controls.Add(split);
+            page.Controls.Add(btnPanel);
+            return page;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // Helpers
+        // ════════════════════════════════════════════════════════════════════
+        private static void CopyGridSelected(DataGridView grid)
         {
             if (grid.SelectedRows.Count == 0) return;
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             foreach (DataGridViewRow row in grid.SelectedRows)
             {
                 foreach (DataGridViewCell cell in row.Cells)
-                    sb.Append((cell.Value ?? "").ToString().PadRight(cell.OwningColumn.Width / 7)).Append('\t');
+                    sb.Append((cell.Value ?? "").ToString()).Append('\t');
                 sb.AppendLine();
             }
             Clipboard.SetText(sb.ToString());
-        }
-
-        private void CopyAll(DataGridView grid)
-        {
-            grid.SelectAll();
-            CopySelected(grid);
-            grid.ClearSelection();
         }
     }
 }

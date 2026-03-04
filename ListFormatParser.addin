@@ -4,7 +4,7 @@
        description = "Parses the FORMAT() attribute of a LIST control into readable column definitions">
 
   <Manifest>
-    <Identity name="ListFormatParser.Addin" version="1.1"/>
+    <Identity name="ListFormatParser.Addin" version="1.2"/>
     <Dependency addin="SharpDevelop" version="2.1"/>
     <Dependency addin="SoftVelocity.ClarionBinding"/>
   </Manifest>
@@ -60,6 +60,11 @@
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
     <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="ParseFromCtx"
+                label="Parse FROM"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.ParseFromCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
       <MenuItem id="CopyFromCaseCtx"
                 label="Copy FROM as CASE"
                 icon="ListFormatParser.ListFormatIcon"
@@ -83,6 +88,11 @@
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
     <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="ParseFromCtxGen"
+                label="Parse FROM"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.ParseFromCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
       <MenuItem id="CopyFromCaseCtxGen"
                 label="Copy FROM as CASE"
                 icon="ListFormatParser.ListFormatIcon"

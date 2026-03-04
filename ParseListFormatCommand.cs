@@ -69,8 +69,17 @@ namespace ListFormatParser
                 return;
             }
 
-            // 7. Show the result dialog
-            using (var form = new ColumnDisplayForm(columns, flatLine))
+            // 7. Also try to parse FROM() if present (populates the FROM tab)
+            List<FromParser.FromEntry> fromEntries = null;
+            string useVar = null;
+            {
+                string dummy;
+                FromParser.TryGetFromEntries(lines, caretLine, out fromEntries, out useVar, out dummy);
+                // If FROM() is a queue-form (not a string literal), TryGetFromEntries returns false — fine
+            }
+
+            // 8. Show the result dialog
+            using (var form = new ColumnDisplayForm(columns, flatLine, fromEntries, useVar))
                 form.ShowDialog();
         }
 

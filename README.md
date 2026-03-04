@@ -119,6 +119,10 @@ Copy `bin\x86\Release\net40\ListFormatParser.dll` and `ListFormatParser.addin` t
 
 FORMAT() parsing logic ported from, and FROM()/CHOOSE/CASE generation inspired by, [Carl Barnes' List-Format-Parser](https://github.com/CarlTBarnes/List-Format-Parser) (MIT licence).
 
+> **Addin advantage:** Unlike Carl's standalone tool (which requires you to copy code and paste it in),
+> this addin reads directly from the IDE editor at cursor position — no copy/paste needed.
+> Works on any Clarion control that has a `FORMAT()` or `FROM('...')` attribute: `LIST`, `SPIN`, `COMBO`, drop-lists, etc.
+
 ## Licence
 
 [MIT](LICENSE)
