@@ -28,16 +28,25 @@ namespace ListFormatParser
                                  List<FromParser.FromEntry> fromEntries = null,
                                  string useVar = null, bool fromFirst = false)
         {
-            Text          = "List Format Parser";
+            bool fromOnly = columns.Count == 0 && fromEntries != null && fromEntries.Count > 0;
+            Text          = fromOnly ? "List Format Parser — FROM" : "List Format Parser — FORMAT";
             Size          = new Size(1060, 580);
             MinimumSize   = new Size(700, 400);
             StartPosition = FormStartPosition.CenterScreen;
             MinimizeBox   = false;
             Font          = new Font("Segoe UI", 9f);
 
+            // ── Window icon ─────────────────────────────────────────────────
+            using (var stream = System.Reflection.Assembly.GetExecutingAssembly()
+                       .GetManifestResourceStream("ListFormatParser.Resources.FormIcon.png"))
+            {
+                if (stream != null)
+                    using (var bmp = new Bitmap(stream))
+                        Icon = Icon.FromHandle(bmp.GetHicon());
+            }
+
             // ── Status bar ──────────────────────────────────────────────────
             _status      = new StatusStrip();
-            bool fromOnly = columns.Count == 0 && fromEntries != null && fromEntries.Count > 0;
             _statusLabel = new ToolStripStatusLabel(
                 fromOnly
                     ? $"{(fromEntries?.Count ?? 0)} FROM entries — use tabs below to copy as CASE or CHOOSE"
@@ -81,7 +90,9 @@ namespace ListFormatParser
                 Dock             = DockStyle.Fill,
                 Orientation      = Orientation.Horizontal,
                 SplitterDistance = 220,
+                SplitterWidth    = 6,
             };
+            StyleSplitter(split);
             split.Panel1.Controls.Add(topPane);
             split.Panel2.Controls.Add(tabs);
 
@@ -340,7 +351,9 @@ namespace ListFormatParser
                 Dock        = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
                 SplitterDistance = 680,
+                SplitterWidth    = 6,
             };
+            StyleSplitter(split);
             split.Panel1.Controls.Add(txtFmt);
             split.Panel2.Controls.Add(txtFields);
 
@@ -406,7 +419,9 @@ namespace ListFormatParser
                 Dock        = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
                 SplitterDistance = 300,
+                SplitterWidth    = 6,
             };
+            StyleSplitter(split);
             split.Panel1.Controls.Add(txtFrom);
             split.Panel2.Controls.Add(txtCase);
 
@@ -430,6 +445,31 @@ namespace ListFormatParser
         // ════════════════════════════════════════════════════════════════════
         // Helpers
         // ════════════════════════════════════════════════════════════════════
+        private static void StyleSplitter(SplitContainer sc)
+        {
+            sc.Paint += (s, e) =>
+            {
+                var r = sc.SplitterRectangle;
+                using (var b = new System.Drawing.SolidBrush(System.Drawing.SystemColors.ControlDark))
+                    e.Graphics.FillRectangle(b, r);
+                // grip dots
+                int cx = r.X + r.Width / 2;
+                int cy = r.Y + r.Height / 2;
+                int span = sc.Orientation == Orientation.Horizontal ? r.Width : r.Height;
+                int step = 6, dots = Math.Min(7, span / step);
+                int half = dots / 2 * step;
+                using (var dot = new System.Drawing.SolidBrush(System.Drawing.SystemColors.ControlLight))
+                {
+                    for (int i = -half; i <= half; i += step)
+                    {
+                        int dx = sc.Orientation == Orientation.Horizontal ? cx + i : cx - 1;
+                        int dy = sc.Orientation == Orientation.Horizontal ? cy - 1 : cy + i;
+                        e.Graphics.FillRectangle(dot, dx, dy, 2, 2);
+                    }
+                }
+            };
+        }
+
         private static void CopyGridSelected(DataGridView grid)
         {
             if (grid.SelectedRows.Count == 0) return;

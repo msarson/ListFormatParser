@@ -2,6 +2,15 @@
 
 All notable changes to List Format Parser are documented here.
 
+## [1.2.4] - 2026-03-04
+
+### Fixed
+- Splitter bars now visually distinct — 6px dark bar with grip dots; panels no longer turn grey
+
+### Added
+- Custom window icon (blue table/grid graphic) replaces default WinForms icon
+- Window title now reflects context: **"List Format Parser — FORMAT"** or **"List Format Parser — FROM"**
+
 ## [1.2.1] - 2026-03-04
 
 ### Fixed

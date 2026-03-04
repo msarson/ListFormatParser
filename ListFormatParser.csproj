@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\ListFormatIcon.png" />
+    <EmbeddedResource Include="Resources\FormIcon.png" />
   </ItemGroup>
 
   <ItemGroup>
