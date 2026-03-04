@@ -59,8 +59,11 @@ namespace ListFormatParser
 
             // ── Tab control (Explain, FORMAT Lines, FROM) ────────────────────
             var tabs = new TabControl { Dock = DockStyle.Fill };
-            tabs.TabPages.Add(BuildExplainTab(columns));
-            tabs.TabPages.Add(BuildFormatLinesTab(columns, flatSourceLine));
+            if (columns.Count > 0)
+            {
+                tabs.TabPages.Add(BuildExplainTab(columns));
+                tabs.TabPages.Add(BuildFormatLinesTab(columns, flatSourceLine));
+            }
             if (fromEntries != null && fromEntries.Count > 0)
                 tabs.TabPages.Add(BuildFromTab(fromEntries, useVar ?? "ListUseVariable"));
 
