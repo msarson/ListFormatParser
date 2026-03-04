@@ -117,7 +117,7 @@ Copy `bin\x86\Release\net40\ListFormatParser.dll` and `ListFormatParser.addin` t
 
 ## Credits
 
-FORMAT() parsing logic ported from [Carl Barnes' List-Format-Parser](https://github.com/CarlTBarnes/List-Format-Parser) (MIT licence).
+FORMAT() parsing logic ported from, and FROM()/CHOOSE/CASE generation inspired by, [Carl Barnes' List-Format-Parser](https://github.com/CarlTBarnes/List-Format-Parser) (MIT licence).
 
 ## Licence
 
