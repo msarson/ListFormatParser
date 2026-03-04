@@ -25,20 +25,32 @@ namespace ListFormatParser
         {
             if (columns == null || columns.Count == 0) return "FORMAT('')";
 
+            // Pre-build all column specs to find max length for &| alignment
+            var specs = new string[columns.Count];
+            for (int i = 0; i < columns.Count; i++)
+                specs[i] = BuildColumnSpec(columns[i]);
+
+            int maxLen = 0;
+            for (int i = 0; i < columns.Count - 1; i++)
+                if (specs[i].Length > maxLen) maxLen = specs[i].Length;
+
             var sb = new StringBuilder();
 
             for (int i = 0; i < columns.Count; i++)
             {
-                string colSpec = BuildColumnSpec(columns[i]);
+                bool isLast = (i == columns.Count - 1);
 
                 if (i == 0)
-                {
-                    sb.Append(Indent1).Append(colSpec);
-                }
+                    sb.Append(Indent1).Append(specs[i]);
                 else
+                    sb.Append(continuationIndent).Append('\'').Append(specs[i]);
+
+                if (!isLast)
                 {
-                    // Close previous literal, Clarion line continuation |, open new literal aligned
-                    sb.Append("' &|\r\n").Append(continuationIndent).Append('\'').Append(colSpec);
+                    sb.Append("'"); // close quote first
+                    int pad = maxLen - specs[i].Length;
+                    if (pad > 0) sb.Append(new string(' ', pad));
+                    sb.Append(" &|\r\n");
                 }
             }
 

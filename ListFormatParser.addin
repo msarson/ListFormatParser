@@ -4,7 +4,7 @@
        description = "Parses the FORMAT() attribute of a LIST control into readable column definitions">
 
   <Manifest>
-    <Identity name="ListFormatParser.Addin" version="1.0"/>
+    <Identity name="ListFormatParser.Addin" version="1.1"/>
     <Dependency addin="SharpDevelop" version="2.1"/>
     <Dependency addin="SoftVelocity.ClarionBinding"/>
   </Manifest>
@@ -12,6 +12,7 @@
   <Runtime>
     <Import assembly="ListFormatParser.dll">
       <ConditionEvaluator name="HasFormatAttribute" class="ListFormatParser.HasFormatAttributeCondition"/>
+      <ConditionEvaluator name="HasFromString" class="ListFormatParser.HasFromStringCondition"/>
     </Import>
   </Runtime>
 
@@ -27,6 +28,26 @@
                 icon="ListFormatParser.ListFormatIcon"
                 class="ListFormatParser.CleanListFormatCommand"/>
     </Condition>
+    <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="CleanFromSelections"
+                label="Format FROM Selections"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CleanFromCommand"/>
+    </Condition>
+  </Path>
+
+  <!-- Edit menu — code-generation tools, not formatters -->
+  <Path name="/SharpDevelop/Workbench/MainMenu/Edit">
+    <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="CopyFromCase"
+                label="Copy FROM as CASE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromCaseCommand"/>
+      <MenuItem id="CopyFromChoose"
+                label="Copy FROM as CHOOSE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromChooseCommand"/>
+    </Condition>
   </Path>
 
   <!-- CLW source editor — Parse is an inspection tool, stays in direct context menu -->
@@ -38,6 +59,18 @@
                 class="ListFormatParser.ParseListFormatCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
+    <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="CopyFromCaseCtx"
+                label="Copy FROM as CASE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromCaseCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+      <MenuItem id="CopyFromChooseCtx"
+                label="Copy FROM as CHOOSE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromChooseCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+    </Condition>
   </Path>
 
   <!-- Embeditor — Parse available in both read-only and read-write -->
@@ -47,6 +80,18 @@
                 label="Parse List Format"
                 icon="ListFormatParser.ListFormatIcon"
                 class="ListFormatParser.ParseListFormatCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+    </Condition>
+    <Condition name="HasFromString" action="Exclude">
+      <MenuItem id="CopyFromCaseCtxGen"
+                label="Copy FROM as CASE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromCaseCommand"
+                insertbefore="OpenSelectedViaRedFile"/>
+      <MenuItem id="CopyFromChooseCtxGen"
+                label="Copy FROM as CHOOSE"
+                icon="ListFormatParser.ListFormatIcon"
+                class="ListFormatParser.CopyFromChooseCommand"
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
   </Path>
