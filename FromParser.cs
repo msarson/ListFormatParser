@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ListFormatParser
 {
@@ -41,7 +42,29 @@ namespace ListFormatParser
             return entries;
         }
 
-        /// <summary>Flattens a continuation block into a single string.</summary>
+        /// <summary>
+        /// Re-parses a formatted FROM('...' &|\n...) string (as produced by GenerateFromLines)
+        /// back into a list of entries.  Strips the FROM('...') wrapper, collapses continuation
+        /// markers, then delegates to ParseEntries.
+        /// </summary>
+        internal static List<FromEntry> ParseFromString(string fromLines)
+        {
+            // Strip FROM(' prefix and ') suffix, collapse &| continuation markers
+            if (string.IsNullOrEmpty(fromLines)) return new List<FromEntry>();
+            string s = fromLines.Trim();
+            // Remove FROM( and trailing )
+            if (s.StartsWith("FROM(", System.StringComparison.OrdinalIgnoreCase))
+                s = s.Substring(5);
+            if (s.EndsWith(")"))
+                s = s.Substring(0, s.Length - 1);
+            // Collapse continuation: ' &|\r\n<spaces>' → nothing (string continues)
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"'\s*&\|\s*\r?\n\s*'", "");
+            // Now s is like 'Mr.|#1|Mrs.|#2' — extract the string value
+            string inner = ExtractStringValue("(" + s + ")");
+            return ParseEntries(inner);
+        }
+
+
         internal static string BuildFlat(string[] lines, int start, int end)
         {
             var sb = new StringBuilder();
@@ -146,6 +169,71 @@ namespace ListFormatParser
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Generates a Clarion-style multi-line FROM('...') string — one entry per line,
+        /// with &| continuation markers aligned.  contIndent is the number of spaces
+        /// to use on continuation lines (typically the column of FROM( + 5).
+        /// </summary>
+        internal static string GenerateFromLines(List<FromEntry> entries, int contIndent = 5)
+        {
+            if (entries == null || entries.Count == 0) return "FROM('')";
+
+            string indent = new string(' ', contIndent < 0 ? 0 : contIndent);
+
+            // Build the content token for each entry
+            var contents = new string[entries.Count];
+            for (int i = 0; i < entries.Count; i++)
+            {
+                string s = entries[i].Display.Replace("'", "''");
+                if (entries[i].Value != null)
+                    s += "|#" + entries[i].Value.Replace("'", "''");
+                if (i < entries.Count - 1)
+                    s += "|";
+                contents[i] = s;
+            }
+
+            // Align the &| markers
+            int maxLen = 0;
+            for (int i = 0; i < entries.Count - 1; i++)
+                if (contents[i].Length > maxLen) maxLen = contents[i].Length;
+
+            var sb = new StringBuilder();
+            sb.Append("FROM('");
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (i > 0) sb.Append(indent).Append("'");
+                sb.Append(contents[i]);
+                if (i < entries.Count - 1)
+                {
+                    sb.Append("'");
+                    int pad = maxLen - contents[i].Length;
+                    if (pad > 0) sb.Append(new string(' ', pad));
+                    sb.Append(" &|\r\n");
+                }
+                else
+                {
+                    sb.Append("')");
+                }
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Reconstructs the flat source line with a new FROM('...') substituted in.
+        /// Returns null if FROM() cannot be located in the flat line.
+        /// </summary>
+        internal static string BuildReformattedSourceLine(string flatLine, List<FromEntry> entries)
+        {
+            if (string.IsNullOrEmpty(flatLine) || entries == null) return null;
+            string code = ClarionCodeParser.MakeCodeOnlyLine(flatLine);
+            int begAtt, begParen, endParen;
+            if (!ClarionCodeParser.FindAttrParen(code, "FROM", out begAtt, out begParen, out endParen))
+                return null;
+            int indent = begAtt + 5; // FROM( = 5 chars to the opening quote
+            string cleanFrom = GenerateFromLines(entries, indent);
+            return flatLine.Substring(0, begAtt) + cleanFrom + flatLine.Substring(endParen + 1);
         }
     }
 }

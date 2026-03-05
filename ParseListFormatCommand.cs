@@ -2,6 +2,7 @@ using ICSharpCode.Core;
 using ICSharpCode.SharpDevelop.DefaultEditor.Gui.Editor;
 using ICSharpCode.SharpDevelop.Gui;
 using ICSharpCode.TextEditor;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -78,8 +79,39 @@ namespace ListFormatParser
                 // If FROM() is a queue-form (not a string literal), TryGetFromEntries returns false — fine
             }
 
-            // 8. Show the result dialog
-            using (var form = new ColumnDisplayForm(columns, flatLine, fromEntries, useVar))
+            // 8. Show the result dialog — pass write-back delegate if FROM is present
+            Action<string> writeBack = null;
+            if (fromEntries != null && fromEntries.Count > 0)
+            {
+                var capturedTec   = tec;
+                int capturedStart = blockStart;
+                int capturedEnd   = CollectBlock(lines, blockStart).Count - 1 + blockStart;
+                writeBack = (newFromStr) =>
+                {
+                    var wDoc = capturedTec.Document;
+                    string[] current = wDoc.TextContent.Split(
+                        new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.None);
+                    FlatMap map;
+                    string flat = CleanFromCommand.BuildFlatWithMap(current, capturedStart, capturedEnd, out map);
+                    string code = ClarionCodeParser.MakeCodeOnlyLine(flat);
+                    int ba, bp, ep;
+                    if (!ClarionCodeParser.FindAttrParen(code, "FROM", out ba, out bp, out ep)) return;
+                    int off0    = map.FlatToDocOffset(ba, wDoc);
+                    int off1    = map.FlatToDocOffset(ep, wDoc) + 1;
+                    if (off0 < 0 || off1 <= off0) return;
+                    int fromCol = map.FlatToDocColumn(ba);
+                    int indent  = (fromCol >= 0 ? fromCol : 0) + 5;
+                    var entries = FromParser.ParseFromString(newFromStr);
+                    string aligned = FromParser.GenerateFromLines(entries, indent);
+                    wDoc.UndoStack.StartUndoGroup();
+                    wDoc.Replace(off0, off1 - off0, aligned);
+                    wDoc.UndoStack.EndUndoGroup();
+                    capturedTec.Refresh();
+                };
+            }
+
+            using (var form = new ColumnDisplayForm(columns, flatLine, fromEntries, useVar,
+                                                    writeBackFrom: writeBack))
                 form.ShowDialog();
         }
 

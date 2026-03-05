@@ -4,7 +4,7 @@
        description = "Parses the FORMAT() attribute of a LIST control into readable column definitions">
 
   <Manifest>
-    <Identity name="ListFormatParser.Addin" version="1.2.4"/>
+    <Identity name="ListFormatParser.Addin" version="1.3.0"/>
     <Dependency addin="SharpDevelop" version="2.1"/>
     <Dependency addin="SoftVelocity.ClarionBinding"/>
   </Manifest>
@@ -52,6 +52,11 @@
 
   <!-- CLW source editor — Parse is an inspection tool, stays in direct context menu -->
   <Path name="/SharpDevelop/ViewContent/ClarionTextEditor/ContextMenu">
+    <MenuItem id="Queue2Format"
+              label="Queue → Format Generator"
+              icon="ListFormatParser.ListFormatIcon"
+              class="ListFormatParser.Queue2FormatCommand"
+              insertbefore="OpenSelectedViaRedFile"/>
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParser"
                 label="Parse List Format"
@@ -80,6 +85,11 @@
 
   <!-- Embeditor — Parse available in both read-only and read-write -->
   <Path name="/SharpDevelop/ViewContent/ClarionGenTextEditor/ContextMenu">
+    <MenuItem id="Queue2FormatGen"
+              label="Queue → Format Generator"
+              icon="ListFormatParser.ListFormatIcon"
+              class="ListFormatParser.Queue2FormatCommand"
+              insertbefore="OpenSelectedViaRedFile"/>
     <Condition name="HasFormatAttribute" action="Exclude">
       <MenuItem id="ListFormatParserGen"
                 label="Parse List Format"
@@ -105,5 +115,6 @@
                 insertbefore="OpenSelectedViaRedFile"/>
     </Condition>
   </Path>
+
 
 </AddIn>

@@ -1,6 +1,7 @@
 using ICSharpCode.Core;
 using ICSharpCode.SharpDevelop.DefaultEditor.Gui.Editor;
 using ICSharpCode.SharpDevelop.Gui;
+using System;
 using System.Collections.Generic;
 
 namespace ListFormatParser
@@ -19,8 +20,9 @@ namespace ListFormatParser
             var provider = window.ActiveViewContent as ITextEditorControlProvider;
             if (provider == null) return;
 
-            var area  = provider.TextEditorControl.ActiveTextAreaControl;
-            string[] lines = provider.TextEditorControl.Document.TextContent.Split(
+            var tec  = provider.TextEditorControl;
+            var area = tec.ActiveTextAreaControl;
+            string[] lines = tec.Document.TextContent.Split(
                 new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.None);
 
             // Try to get FROM entries
@@ -35,10 +37,11 @@ namespace ListFormatParser
             // Also try FORMAT() — may not be present (e.g. SPIN)
             List<FormatColumn> columns = new List<FormatColumn>();
             string flatLine = "";
+            int blockStart, blockEnd;
             {
-                int blockStart = FromParser.FindGroupStart(lines, area.Caret.Line);
-                int blockEnd   = FromParser.FindGroupEnd(lines, blockStart);
-                flatLine       = FromParser.BuildFlat(lines, blockStart, blockEnd);
+                blockStart = FromParser.FindGroupStart(lines, area.Caret.Line);
+                blockEnd   = FromParser.FindGroupEnd(lines, blockStart);
+                flatLine   = FromParser.BuildFlat(lines, blockStart, blockEnd);
                 string codeOnly = ClarionCodeParser.MakeCodeOnlyLine(flatLine);
 
                 int begAtt, begParen, endParen;
@@ -51,7 +54,37 @@ namespace ListFormatParser
                 }
             }
 
-            using (var form = new ColumnDisplayForm(columns, flatLine, fromEntries, useVar, fromFirst: true))
+            // Build write-back delegate — replaces FROM('...') in the editor at dialog commit
+            var capturedTec   = tec;
+            int capturedStart = blockStart;
+            int capturedEnd   = blockEnd;
+            Action<string> writeBack = (newFromStr) =>
+            {
+                var doc = capturedTec.Document;
+                string[] current = doc.TextContent.Split(
+                    new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.None);
+                FlatMap map;
+                string flat = CleanFromCommand.BuildFlatWithMap(current, capturedStart, capturedEnd, out map);
+                string code = ClarionCodeParser.MakeCodeOnlyLine(flat);
+                int ba, bp, ep;
+                if (!ClarionCodeParser.FindAttrParen(code, "FROM", out ba, out bp, out ep)) return;
+                int off0    = map.FlatToDocOffset(ba, doc);
+                int off1    = map.FlatToDocOffset(ep, doc) + 1;
+                if (off0 < 0 || off1 <= off0) return;
+                int fromCol = map.FlatToDocColumn(ba);
+                int indent  = (fromCol >= 0 ? fromCol : 0) + 5; // FROM( = 5 chars to opening quote
+                // newFromStr already contains the entries as a FROM string at default indent;
+                // re-parse entries then regenerate with the correct source indent
+                var entries = FromParser.ParseFromString(newFromStr);
+                string aligned = FromParser.GenerateFromLines(entries, indent);
+                doc.UndoStack.StartUndoGroup();
+                doc.Replace(off0, off1 - off0, aligned);
+                doc.UndoStack.EndUndoGroup();
+                capturedTec.Refresh();
+            };
+
+            using (var form = new ColumnDisplayForm(columns, flatLine, fromEntries, useVar,
+                                                    fromFirst: true, writeBackFrom: writeBack))
                 form.ShowDialog();
         }
     }

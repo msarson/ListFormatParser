@@ -2,6 +2,17 @@
 
 All notable changes to List Format Parser are documented here.
 
+## [1.3.0] - 2026-03-05
+
+### Added
+- **Queue → Format Generator** (right-click in CLW editor and Embeditor) — paste a `QUEUE` or `FILE` declaration, configure column widths and alignment, and generate a ready-to-use `FORMAT()` string with matching `#FIELDS()` output
+- `ModifierData` — centralised modifier flag descriptions (shared between column grid tooltips and Explain tab)
+- `NativeMethods` — Win32 interop helpers for UI polish
+
+### Changed
+- Modifier descriptions in hover tooltips and Explain tab now use the unified `ModifierData` source
+- Various improvements to column display form layout and FROM parser robustness
+
 ## [1.2.4] - 2026-03-04
 
 ### Fixed

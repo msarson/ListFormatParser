@@ -4,6 +4,11 @@ A Clarion IDE addin that parses the `FORMAT()` attribute of a `LIST` control and
 
 ## Features
 
+### Queue → Format Generator
+- Right-click anywhere in the CLW editor or Embeditor → **Queue → Format Generator**
+- Paste a `QUEUE` or `FILE` declaration; the addin parses the fields and lets you configure column widths and alignment
+- Generates a ready-to-use `FORMAT()` string and matching `#FIELDS()` output
+
 ### FORMAT() tools
 - Right-click any line inside a `LIST` control definition → **Parse List Format**
 - Handles line continuations automatically — works across multi-line definitions

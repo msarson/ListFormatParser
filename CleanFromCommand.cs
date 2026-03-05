@@ -231,7 +231,7 @@ namespace ListFormatParser
         // Position-tracked flatten (mirrors CleanListFormatCommand)
         // -----------------------------------------------------------------------
 
-        private static string BuildFlatWithMap(
+        internal static string BuildFlatWithMap(
             string[] lines, int start, int end, out FlatMap map)
         {
             map = new FlatMap();
